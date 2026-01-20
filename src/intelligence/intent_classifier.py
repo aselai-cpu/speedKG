@@ -7,7 +7,8 @@ Uses Claude to analyze queries and determine the best retrieval strategy.
 
 import logging
 from typing import Tuple
-from anthropic import Anthropic
+from anthropic import Anthropic, APIError, RateLimitError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from src.intelligence.state import QueryIntent
 from src.utils.config import get_config
@@ -65,6 +66,33 @@ If the query is ambiguous, choose the most likely intent and lower the confidenc
         self.client = Anthropic(api_key=anthropic_api_key or config.ANTHROPIC_API_KEY)
         self.model = model or config.CLAUDE_MODEL
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=16),
+        retry=retry_if_exception_type((RateLimitError, APIError)),
+        before_sleep=lambda retry_state: logger.warning(
+            f"Intent classification attempt {retry_state.attempt_number} failed, retrying..."
+        )
+    )
+    def _call_claude_api(self, query: str) -> any:
+        """
+        Call Claude API with retry logic.
+
+        Args:
+            query: User query string
+
+        Returns:
+            Claude API response
+        """
+        return self.client.messages.create(
+            model=self.model,
+            max_tokens=200,
+            system=self.SYSTEM_PROMPT,
+            messages=[
+                {"role": "user", "content": query}
+            ]
+        )
+
     def classify(self, query: str) -> Tuple[QueryIntent, float]:
         """
         Classify a user query into an intent category.
@@ -78,14 +106,7 @@ If the query is ambiguous, choose the most likely intent and lower the confidenc
         logger.info(f"Classifying query intent: {query[:100]}...")
 
         try:
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=200,
-                system=self.SYSTEM_PROMPT,
-                messages=[
-                    {"role": "user", "content": query}
-                ]
-            )
+            response = self._call_claude_api(query)
 
             # Parse response
             content = response.content[0].text.strip()

@@ -6,7 +6,8 @@ Uses Claude to reason over retrieved subgraphs and generate natural language res
 
 import logging
 from typing import Tuple, List
-from anthropic import Anthropic
+from anthropic import Anthropic, APIError, RateLimitError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from src.utils.config import get_config
 
@@ -81,6 +82,33 @@ Always include a "Citations" section at the end listing:
         self.client = Anthropic(api_key=anthropic_api_key or config.ANTHROPIC_API_KEY)
         self.model = model or config.CLAUDE_MODEL
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=16),
+        retry=retry_if_exception_type((RateLimitError, APIError)),
+        before_sleep=lambda retry_state: logger.warning(
+            f"Reasoning attempt {retry_state.attempt_number} failed, retrying..."
+        )
+    )
+    def _call_claude_api(self, user_message: str) -> any:
+        """
+        Call Claude API with retry logic.
+
+        Args:
+            user_message: User message containing query and subgraph data
+
+        Returns:
+            Claude API response
+        """
+        return self.client.messages.create(
+            model=self.model,
+            max_tokens=2000,
+            system=self.SYSTEM_PROMPT,
+            messages=[
+                {"role": "user", "content": user_message}
+            ]
+        )
+
     def reason(self, user_query: str, subgraph_text: str, cypher_query: str = None) -> Tuple[str, List[str], int]:
         """
         Generate reasoning response from subgraph.
@@ -108,14 +136,7 @@ Graph Data Retrieved:
         user_message += "\n\nPlease analyze this data and answer the user's question following the response format guidelines."
 
         try:
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=2000,
-                system=self.SYSTEM_PROMPT,
-                messages=[
-                    {"role": "user", "content": user_message}
-                ]
-            )
+            response = self._call_claude_api(user_message)
 
             response_text = response.content[0].text.strip()
             token_count = response.usage.input_tokens + response.usage.output_tokens

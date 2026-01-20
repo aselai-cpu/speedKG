@@ -8,7 +8,8 @@ Includes schema context and security validation.
 import logging
 import re
 from typing import Tuple, Optional
-from anthropic import Anthropic
+from anthropic import Anthropic, APIError, RateLimitError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from src.intelligence.state import QueryIntent
 from src.utils.config import get_config
@@ -183,6 +184,34 @@ ORDER BY e.year
         self.client = Anthropic(api_key=anthropic_api_key or config.ANTHROPIC_API_KEY)
         self.model = model or config.CLAUDE_MODEL
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=16),
+        retry=retry_if_exception_type((RateLimitError, APIError)),
+        before_sleep=lambda retry_state: logger.warning(
+            f"Cypher generation attempt {retry_state.attempt_number} failed, retrying..."
+        )
+    )
+    def _call_claude_api(self, system_prompt: str, user_message: str) -> any:
+        """
+        Call Claude API with retry logic.
+
+        Args:
+            system_prompt: System prompt for context
+            user_message: User message to send
+
+        Returns:
+            Claude API response
+        """
+        return self.client.messages.create(
+            model=self.model,
+            max_tokens=1000,
+            system=system_prompt,
+            messages=[
+                {"role": "user", "content": user_message}
+            ]
+        )
+
     def generate(self, query: str, intent: QueryIntent) -> Tuple[str, bool, Optional[str]]:
         """
         Generate Cypher query from natural language.
@@ -208,13 +237,9 @@ The query intent is: {intent.value}
 """
 
         try:
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=1000,
-                system=system_prompt,
-                messages=[
-                    {"role": "user", "content": f"Generate a Cypher query for: {query}"}
-                ]
+            response = self._call_claude_api(
+                system_prompt,
+                f"Generate a Cypher query for: {query}"
             )
 
             cypher = response.content[0].text.strip()
