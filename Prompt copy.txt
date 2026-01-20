@@ -1,0 +1,33 @@
+Project Goal: 
+Build a "SPEED-CAMEO Temperol Knowledge Graph & Intelligence System" utilizing high-performance engineering standards. The system uses the CAMEO for event classification, ontological consistency, and Claude for reasoning and retrieval.
+
+Module Requirements:
+
+- Use /data/SPEED-Codebook.xls for field definition, use this to create ontology and schema in neo4j 
+- Then Python module to ingest SPEED CSVs (/data/ssp_public.csv) into Neo4j, enforcing CAMEO event types. 
+- Graph Intelligence: Based on the above definitions create ontology for this. It should allign with CAMEO actors, verbs and options are located in /data/cameo/*
+- Simple UI: Build a Streamlit dashboard that provides:
+    - A chat interface for natural language queries.
+    - A sidebar to display the current Neo4j Graph Schema.
+    - A "Trace" view to see agent logs in real-time.
+
+Core Architecture & Standards:
+- Use Domain Driven Design
+- Environment: Use uv and pyproject.toml. No requirements.txt.
+- LLM and GraphRAG: Use Claude API. Implement graphRAG for document retrieval and graph-based reasoning.
+- Evaluation-Driven Development (EDD): Maintain an /evals directory. Include a script to run these evals and report accuracy.
+- Containerization: A docker-compose.yml orchestrating Neo4j (with APOC) and the Streamlit Python App.
+
+- Documentation:
+    - README.md: Setup with uv.
+    - architecture.md: C4 Diagrams
+    - walkthrough.md: A detailed step-by-step code walkthrough explaining the logic of the ingestion script, the LangGraph state machine, and the UI integration.
+
+Folder Structure: /data, /src (ui, ingestion, agents), /tests, /evals, /agent_logs, /docs.
+
+Initial Step: 
+1. Generate the pyproject.toml (with streamlit, Claude neo4j dependencies). 2. Generate the docker-compose.yml.
+3. Create docs/architecture.md explaining the EDD flow and the Streamlit communication.
+
+
+

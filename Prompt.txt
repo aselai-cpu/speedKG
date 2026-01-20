@@ -1,0 +1,312 @@
+Project Goal:
+Build a "SPEED-CAMEO Temporal Knowledge Graph & Intelligence System" utilizing high-performance engineering standards. The system uses CAMEO for event classification, ontological consistency, and Claude for reasoning and retrieval.
+
+================================================================================
+FUNCTIONAL REQUIREMENTS
+================================================================================
+
+Module 1: Data Ingestion & Schema Creation
+-------------------------------------------
+- Use /data/SPEED-Codebook.xls for field definitions to create Neo4j ontology and schema
+- Python module to ingest SPEED CSVs (/data/ssp_public.csv) into Neo4j
+- Enforce CAMEO event types during ingestion
+- Data validation: Validate CSV schema integrity before ingestion
+- Error handling: Log malformed records, skip and continue processing
+
+Module 2: Graph Intelligence & Ontology
+----------------------------------------
+- Create ontology aligned with CAMEO framework:
+  - Actors: CAMEO actor codes and hierarchies from /data/cameo/*.actors
+  - Verbs: CAMEO event codes (20 root categories) from /data/cameo/*.verbs
+  - Options: Event qualifiers and attributes from /data/cameo/*.options
+- Implement GraphRAG pattern:
+  - Cypher query generation from natural language
+  - Subgraph retrieval for context
+  - Claude-based reasoning over retrieved graph data
+- Neo4j Performance:
+  - Create unique constraints on event IDs
+  - Index temporal fields (dates, timestamps)
+  - Index CAMEO codes for fast lookups
+
+Module 3: Streamlit UI
+-----------------------
+Build a Streamlit dashboard that provides:
+1. Chat Interface:
+   - Natural language query input
+   - Display LLM responses with source citations
+   - Show generated Cypher queries (expandable section)
+
+2. Sidebar:
+   - Display current Neo4j graph schema (node labels, relationships)
+   - Connection status indicator
+   - Query history
+
+3. Trace View:
+   - Real-time agent logs using WebSocket or SSE
+   - Expandable LangGraph state transitions
+   - Display reasoning steps and graph queries
+
+================================================================================
+CORE ARCHITECTURE & STANDARDS
+================================================================================
+
+Design Principles:
+------------------
+- Domain Driven Design (DDD): Organize code by domain (events, actors, intelligence)
+- Evaluation-Driven Development (EDD): Test with real queries and measure accuracy
+- Contract-first: Define clear interfaces between ingestion, graph, and UI layers
+
+Technology Stack:
+-----------------
+- Python Environment: uv with pyproject.toml (no requirements.txt)
+- LLM: Claude API (claude-3-5-sonnet-20241022 or latest)
+- Graph Database: Neo4j 5.x with APOC plugin
+- Agent Framework: LangGraph for state machine and reasoning workflow
+- UI Framework: Streamlit
+- Testing: pytest with >80% coverage target
+- Logging: structlog for structured agent trace logs
+- Containerization: Docker Compose orchestrating Neo4j and Streamlit app
+
+Environment Variables:
+----------------------
+Create .env.example with:
+- ANTHROPIC_API_KEY=your_key_here
+- NEO4J_URI=bolt://neo4j:7687
+- NEO4J_USER=neo4j
+- NEO4J_PASSWORD=your_password
+- LOG_LEVEL=INFO
+
+LangGraph Agent Workflow:
+-------------------------
+1. User Query → Parse Intent
+2. Generate Cypher Query (with Claude)
+3. Execute Query on Neo4j
+4. Retrieve Subgraph Context
+5. Reason over Results (with Claude)
+6. Format Response for User
+
+GraphRAG Implementation:
+------------------------
+- Convert natural language to Cypher using few-shot examples
+- Retrieve relevant subgraphs (2-3 hop neighborhoods)
+- Pass subgraph context to Claude for reasoning
+- Cite specific nodes/relationships in responses
+
+================================================================================
+NON-FUNCTIONAL REQUIREMENTS
+================================================================================
+
+Performance:
+- Query response time: <3 seconds for typical queries
+- Ingestion: Handle 10k+ events efficiently
+
+Reliability:
+- Graceful degradation if Claude API unavailable
+- Retry logic with exponential backoff for API calls
+- Transaction rollback on ingestion errors
+
+Security:
+- Never commit .env files
+- Never commit /data folder content
+- Use environment variables for all secrets
+- Validate Cypher queries to prevent injection
+
+Observability:
+- Structured logs in /logs
+- Log all LLM prompts and responses (for debugging)
+- Log all Neo4j Queries that get executed
+- Track token usage and costs
+
+================================================================================
+EVALUATION STRATEGY (EDD)
+================================================================================
+
+/evals Directory:
+-----------------
+Create evaluation datasets:
+1. evals/test_queries.json: Sample natural language questions with expected results
+2. evals/cypher_generation.json: Query → Cypher pairs for accuracy testing
+3. evals/reasoning.json: Complex reasoning scenarios
+
+Evaluation Script:
+------------------
+- evals/run_evals.py: Automated evaluation runner
+- Metrics:
+  - Cypher Generation Accuracy: % of valid queries generated
+  - Answer Accuracy: F1 score against expected results
+  - Latency: P50, P95, P99 response times
+- Output: evals/results.json with timestamped scores
+
+================================================================================
+DOCUMENTATION REQUIREMENTS
+================================================================================
+
+1. README.md:
+   - Quick start with uv (installation, setup, running)
+   - Docker Compose instructions
+   - Example queries to try
+   - Troubleshooting common issues
+
+2. docs/architecture.md:
+   - C4 Context Diagram: System in context (users, Neo4j, Claude API) use plantUML
+   - C4 Container Diagram: Streamlit app, Neo4j, agent components use plantUML
+   - C4 Component Diagram: Internal structure of agent system - use plantUML
+   - Data Flow Diagram: Query → LangGraph → Neo4j → Claude → Response - use plantUML
+   - EDD Workflow: How evaluations fit into development cycle
+
+3. docs/walkthrough.md:
+   - Detailed code walkthrough:
+     * Ingestion script logic and CAMEO mapping
+     * LangGraph state machine implementation
+     * Neo4j query patterns
+     * UI integration and WebSocket trace streaming
+   - Key design decisions and rationales
+
+4. docs/data_model.md:
+   - Neo4j schema definition
+   - CAMEO ontology mapping (actors, verbs, options to nodes/relationships)
+   - Example Cypher queries for common patterns
+   - Schema evolution strategy
+
+5. .env.example:
+   - Template for all required environment variables
+
+6. CONTRIBUTING.md:
+   - Development workflow
+   - How to run tests and evals
+   - Code style guidelines
+   - PR requirements
+
+================================================================================
+FOLDER STRUCTURE
+================================================================================
+
+```
+SpeedKG/
+├── .env.example
+├── pyproject.toml
+├── docker-compose.yml
+├── README.md
+├── CONTRIBUTING.md
+├── data/
+│   ├── SPEED-Codebook.xls
+│   ├── ssp_public.csv
+│   └── cameo/
+│       ├── actors/
+│       ├── verbs/
+│       └── options/
+├── src/
+│   ├── __init__.py
+│   ├── domain/           # DDD domain models
+│   │   ├── events.py
+│   │   ├── actors.py
+│   │   └── cameo.py
+│   ├── ingestion/
+│   │   ├── __init__.py
+│   │   ├── csv_parser.py
+│   │   ├── schema_validator.py
+│   │   └── neo4j_loader.py
+│   ├── intelligence/     # GraphRAG & LangGraph agents
+│   │   ├── __init__.py
+│   │   ├── agent.py      # LangGraph state machine
+│   │   ├── cypher_gen.py
+│   │   ├── graph_retrieval.py
+│   │   └── reasoning.py
+│   ├── ui/
+│   │   ├── __init__.py
+│   │   ├── app.py        # Streamlit main
+│   │   ├── chat.py
+│   │   ├── sidebar.py
+│   │   └── trace_view.py
+│   └── utils/
+│       ├── __init__.py
+│       ├── config.py
+│       └── logging.py
+├── tests/
+│   ├── __init__.py
+│   ├── test_ingestion.py
+│   ├── test_agent.py
+│   └── test_ui.py
+├── evals/
+│   ├── test_queries.json
+│   ├── cypher_generation.json
+│   ├── reasoning.json
+│   ├── run_evals.py
+│   └── results/          # Timestamped results
+├── logs/           # Runtime agent trace logs
+├── docs/
+│   ├── architecture.md
+│   ├── walkthrough.md
+│   └── data_model.md
+└── .gitignore
+```
+
+================================================================================
+INITIAL IMPLEMENTATION STEPS
+================================================================================
+
+Step 1: Project Scaffolding
+----------------------------
+1. Generate pyproject.toml with dependencies:
+   - streamlit
+   - langgraph
+   - langchain-anthropic
+   - neo4j
+   - pandas
+   - openpyxl (for reading .xls)
+   - structlog
+   - pytest
+   - python-dotenv
+
+2. Generate docker-compose.yml:
+   - Neo4j 5.x service with APOC
+   - Streamlit app service
+   - Volume mounts for data/ and agent_logs/
+   - Network configuration
+
+3. Create .env.example
+
+Step 2: Documentation Foundation
+---------------------------------
+1. Create docs/architecture.md:
+   - C4 diagrams (text-based initially)
+   - EDD workflow diagram
+   - Streamlit-to-LangGraph communication flow
+
+2. Create README.md with setup instructions
+
+Step 3: Schema & Ingestion
+---------------------------
+1. Parse SPEED-Codebook.xls to understand fields
+2. Parse CAMEO reference data
+3. Design Neo4j schema (docs/data_model.md)
+4. Implement ingestion pipeline with validation
+
+Step 4: Agent Development (EDD)
+--------------------------------
+1. Create initial evals/test_queries.json
+2. Implement LangGraph agent with basic Cypher generation
+3. Run evals, iterate on accuracy
+4. Add reasoning layer
+
+Step 5: UI Integration
+----------------------
+1. Build Streamlit chat interface
+2. Connect to LangGraph agent
+3. Add trace view with real-time logs
+4. Add schema sidebar
+
+================================================================================
+ACCEPTANCE CRITERIA
+================================================================================
+
+- [ ] Docker Compose starts Neo4j and Streamlit successfully
+- [ ] Ingestion script loads SPEED CSV data with CAMEO validation
+- [ ] Neo4j schema matches CAMEO ontology (documented in data_model.md)
+- [ ] Chat interface responds to natural language queries
+- [ ] Generated Cypher queries are syntactically valid (>90% in evals)
+- [ ] Answer accuracy >70% on eval dataset
+- [ ] Trace view shows agent reasoning steps in real-time
+- [ ] All tests pass with >80% coverage
+- [ ] Documentation complete (README, architecture, walkthrough, data_model)
+- [ ] C4 diagrams present in architecture.md

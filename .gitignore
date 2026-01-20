@@ -1,0 +1,71 @@
+# Environment files
+.env
+.env.local
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project specific
+data/ssp_public.csv
+data/SPEED-Codebook.xls
+data/cameo/
+logs/
+evals/results/
+
+# Keep directory structure
+!data/.gitkeep
+!logs/.gitkeep
+!evals/results/.gitkeep
+
+# Documentation build artifacts
+docs/_build/
+docs/.doctrees/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Docker
+.dockerignore
+
+# Temporary files
+*.tmp
+*.bak
+*.log

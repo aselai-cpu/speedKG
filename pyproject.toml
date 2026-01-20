@@ -1,0 +1,61 @@
+[project]
+name = "speedkg"
+version = "0.1.0"
+description = "SPEED-CAMEO Temporal Knowledge Graph & Intelligence System"
+requires-python = ">=3.11"
+authors = [
+    {name = "SpeedKG Team"}
+]
+readme = "README.md"
+
+dependencies = [
+    "streamlit>=1.31.0",
+    "langgraph>=0.2.0",
+    "langchain-anthropic>=0.1.0",
+    "langchain-core>=0.3.0",
+    "neo4j>=5.16.0",
+    "pandas>=2.2.0",
+    "openpyxl>=3.1.0",
+    "structlog>=24.1.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.5.0",
+    "tenacity>=8.2.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=24.1.0",
+    "ruff>=0.1.0",
+    "mypy>=1.8.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "--cov=src --cov-report=html --cov-report=term-missing"
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "N", "W"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
