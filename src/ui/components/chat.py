@@ -97,28 +97,39 @@ def render_trace_expander(trace: List[Dict[str, Any]]):
     Render execution trace as expandable section.
 
     Args:
-        trace: List of trace step dictionaries
+        trace: List of trace step dictionaries or TraceStep objects
     """
     with st.expander("🔬 Execution Trace"):
         for i, step in enumerate(trace, 1):
-            step_name = step.get('step', 'Unknown')
-            success = step.get('success', True)
-            duration = step.get('duration_ms', 0)
+            # Handle both dict and TraceStep object
+            if isinstance(step, dict):
+                step_name = step.get('step', 'Unknown')
+                success = step.get('success', True)
+                duration = step.get('duration_ms')
+                details = step.get('details', {})
+            else:
+                # TraceStep object (from dataclass)
+                step_name = getattr(step, 'step_name', 'Unknown')
+                success = getattr(step, 'success', True)
+                duration = getattr(step, 'duration_ms', None)
+                details = getattr(step, 'details', {})
 
             status_icon = "✓" if success else "✗"
             status_color = "green" if success else "red"
 
+            # Format duration safely
+            duration_str = f"({duration:.0f}ms)" if duration is not None else ""
+
             st.markdown(f"**{i}. {status_icon} {step_name}** "
-                       f"<span style='color:{status_color}'>({duration:.0f}ms)</span>",
+                       f"<span style='color:{status_color}'>{duration_str}</span>",
                        unsafe_allow_html=True)
 
             # Show details if present
-            details = step.get('details', {})
             if details:
                 st.json(details, expanded=False)
 
             # Show error if present
-            error = step.get('error')
+            error = step.get('error') if isinstance(step, dict) else getattr(step, 'error', None)
             if error:
                 st.error(f"Error: {error}")
 
