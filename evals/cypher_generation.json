@@ -1,0 +1,142 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created": "2026-01-20",
+    "description": "Cypher generation evaluation with reference queries",
+    "purpose": "Evaluate Cypher generation accuracy against reference implementations"
+  },
+  "test_cases": [
+    {
+      "id": "CYP001",
+      "query": "What are the top 5 most active actors?",
+      "intent": "pattern_analysis",
+      "reference_cypher": "MATCH (a:Actor)<-[:INITIATED_BY]-(e:Event)\nRETURN a.name, count(e) as event_count\nORDER BY event_count DESC\nLIMIT 5",
+      "validation_criteria": {
+        "must_have": ["MATCH", "Actor", "INITIATED_BY", "count", "ORDER BY", "DESC", "LIMIT 5"],
+        "should_not_have": ["DELETE", "REMOVE", "SET", "CREATE"],
+        "semantically_equivalent": true
+      }
+    },
+    {
+      "id": "CYP002",
+      "query": "What events occurred in Palestine in 2003?",
+      "intent": "geographic_analysis",
+      "reference_cypher": "MATCH (e:Event)-[:OCCURRED_AT]->(l:Location)\nWHERE l.country = 'Palestine' AND e.year = 2003\nRETURN e.eventId, e.year, e.month, e.day, e.eventType, l.name\nORDER BY e.month, e.day\nLIMIT 100",
+      "validation_criteria": {
+        "must_have": ["MATCH", "Event", "Location", "OCCURRED_AT", "WHERE", "year = 2003"],
+        "must_filter": ["location", "year"],
+        "should_not_have": ["DELETE", "REMOVE"]
+      }
+    },
+    {
+      "id": "CYP003",
+      "query": "What actions did Hamas take?",
+      "intent": "actor_analysis",
+      "reference_cypher": "MATCH (a:Actor {name: 'Hamas'})<-[:INITIATED_BY]-(e:Event)\nRETURN e.eventId, e.year, e.month, e.day, e.eventType\nORDER BY e.year DESC, e.month DESC, e.day DESC\nLIMIT 100",
+      "validation_criteria": {
+        "must_have": ["MATCH", "Actor", "Hamas", "INITIATED_BY", "Event"],
+        "must_filter": ["actor"],
+        "should_return": ["eventId", "year", "eventType"]
+      }
+    },
+    {
+      "id": "CYP004",
+      "query": "How many protests occurred each year?",
+      "intent": "temporal_analysis",
+      "reference_cypher": "MATCH (e:Event)\nWHERE e.eventType IN [14, 15]\nRETURN e.year, count(e) as protest_count\nORDER BY e.year",
+      "validation_criteria": {
+        "must_have": ["MATCH", "Event", "WHERE", "eventType", "count", "year", "ORDER BY"],
+        "must_filter": ["eventType"],
+        "must_aggregate": ["year"]
+      }
+    },
+    {
+      "id": "CYP005",
+      "query": "Which actors targeted Israeli Defense Force?",
+      "intent": "actor_analysis",
+      "reference_cypher": "MATCH (ini:Actor)<-[:INITIATED_BY]-(e:Event)-[:TARGETED]->(tar:Actor)\nWHERE tar.name CONTAINS 'Israeli Defense Force'\nRETURN ini.name, count(e) as target_count\nORDER BY target_count DESC\nLIMIT 10",
+      "validation_criteria": {
+        "must_have": ["MATCH", "Actor", "INITIATED_BY", "TARGETED", "WHERE", "count", "ORDER BY"],
+        "must_involve": ["two_actor_relationships"],
+        "must_filter": ["target_actor"]
+      }
+    },
+    {
+      "id": "CYP006",
+      "query": "What events occurred in Gaza?",
+      "intent": "geographic_analysis",
+      "reference_cypher": "MATCH (e:Event)-[:OCCURRED_AT]->(l:Location)\nWHERE l.name CONTAINS 'Gaza' OR l.country CONTAINS 'Gaza'\nRETURN e.eventId, e.year, e.month, e.day, l.name, l.country\nORDER BY e.year DESC\nLIMIT 100",
+      "validation_criteria": {
+        "must_have": ["MATCH", "Event", "Location", "OCCURRED_AT", "WHERE"],
+        "must_filter": ["location_name_or_country"],
+        "should_use": ["CONTAINS or ="]
+      }
+    },
+    {
+      "id": "CYP007",
+      "query": "Show me all coups",
+      "intent": "pattern_analysis",
+      "reference_cypher": "MATCH (e:Event)\nWHERE e.isCoup = true\nRETURN e.eventId, e.year, e.month, e.day\nORDER BY e.year DESC\nLIMIT 100",
+      "validation_criteria": {
+        "must_have": ["MATCH", "Event", "WHERE", "isCoup"],
+        "must_filter": ["isCoup"],
+        "should_return": ["eventId", "year"]
+      }
+    },
+    {
+      "id": "CYP008",
+      "query": "Which locations had the most events?",
+      "intent": "geographic_analysis",
+      "reference_cypher": "MATCH (l:Location)<-[:OCCURRED_AT]-(e:Event)\nRETURN l.name, l.country, count(e) as event_count\nORDER BY event_count DESC\nLIMIT 10",
+      "validation_criteria": {
+        "must_have": ["MATCH", "Location", "OCCURRED_AT", "count", "ORDER BY", "DESC"],
+        "must_aggregate": ["location"],
+        "should_return": ["location_name", "count"]
+      }
+    },
+    {
+      "id": "CYP009",
+      "query": "What types of events did Palestinian Arabs initiate?",
+      "intent": "actor_analysis",
+      "reference_cypher": "MATCH (a:Actor {name: 'Palestinian Arab'})<-[:INITIATED_BY]-(e:Event)\nRETURN DISTINCT e.eventType, count(e) as count\nORDER BY count DESC",
+      "validation_criteria": {
+        "must_have": ["MATCH", "Actor", "Palestinian Arab", "INITIATED_BY", "eventType", "DISTINCT or count"],
+        "must_filter": ["actor"],
+        "must_aggregate": ["eventType"]
+      }
+    },
+    {
+      "id": "CYP010",
+      "query": "How did coup attempts change over time?",
+      "intent": "temporal_analysis",
+      "reference_cypher": "MATCH (e:Event)\nWHERE e.isCoup = true OR e.isCoupFailed = true\nRETURN e.year, count(e) as coup_count\nORDER BY e.year",
+      "validation_criteria": {
+        "must_have": ["MATCH", "Event", "WHERE", "isCoup", "year", "count", "ORDER BY"],
+        "must_filter": ["coup_related"],
+        "must_aggregate": ["year"]
+      }
+    },
+    {
+      "id": "CYP011",
+      "query": "Which actors were most frequently targeted?",
+      "intent": "actor_analysis",
+      "reference_cypher": "MATCH (a:Actor)<-[:TARGETED]-(e:Event)\nRETURN a.name, count(e) as times_targeted\nORDER BY times_targeted DESC\nLIMIT 10",
+      "validation_criteria": {
+        "must_have": ["MATCH", "Actor", "TARGETED", "count", "ORDER BY", "DESC"],
+        "must_aggregate": ["target_actor"],
+        "should_return": ["actor_name", "count"]
+      }
+    },
+    {
+      "id": "CYP012",
+      "query": "Find events where property was damaged",
+      "intent": "pattern_analysis",
+      "reference_cypher": "MATCH (e:Event)\nWHERE e.propertiesJson IS NOT NULL\nWITH e, apoc.convert.fromJsonMap(e.propertiesJson) as props\nWHERE props.property_damaged IS NOT NULL\nRETURN e.eventId, e.year, props.property_damaged\nLIMIT 100",
+      "validation_criteria": {
+        "must_have": ["MATCH", "Event", "WHERE"],
+        "should_access": ["properties or propertiesJson"],
+        "must_filter": ["property_damaged"]
+      }
+    }
+  ]
+}

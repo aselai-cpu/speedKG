@@ -1,0 +1,291 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created": "2026-01-20",
+    "description": "Test queries for SPEED-CAMEO intelligence agent evaluation",
+    "total_queries": 25
+  },
+  "queries": [
+    {
+      "id": "Q001",
+      "query": "What are the top 5 most active actors?",
+      "intent": "pattern_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Actor", "INITIATED_BY", "count", "ORDER BY", "DESC", "LIMIT"],
+        "should_return_actors": true,
+        "should_include_counts": true,
+        "min_results": 5
+      },
+      "difficulty": "easy"
+    },
+    {
+      "id": "Q002",
+      "query": "What events occurred in Palestine in 2003?",
+      "intent": "geographic_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "Location", "OCCURRED_AT", "WHERE", "year = 2003"],
+        "should_filter_location": true,
+        "should_filter_year": true,
+        "location_mentions": ["Palestine"]
+      },
+      "difficulty": "easy"
+    },
+    {
+      "id": "Q003",
+      "query": "What actions did Hamas take between 2000 and 2005?",
+      "intent": "actor_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Actor", "Hamas", "INITIATED_BY", "WHERE", "year >=", "year <="],
+        "should_filter_actor": true,
+        "should_filter_year_range": true,
+        "actor_mentions": ["Hamas"]
+      },
+      "difficulty": "medium"
+    },
+    {
+      "id": "Q004",
+      "query": "How many protests occurred each year?",
+      "intent": "temporal_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "WHERE", "eventType", "count", "year", "ORDER BY"],
+        "should_aggregate_by_year": true,
+        "should_filter_event_type": true
+      },
+      "difficulty": "easy"
+    },
+    {
+      "id": "Q005",
+      "query": "Show me events linked to coups",
+      "intent": "event_chain",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "WHERE", "isCoup", "LINKED_TO"],
+        "should_filter_coups": true,
+        "should_include_relationships": true
+      },
+      "difficulty": "medium"
+    },
+    {
+      "id": "Q006",
+      "query": "Which actors targeted Israeli Defense Force most frequently?",
+      "intent": "actor_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Actor", "TARGETED", "Israeli", "count", "ORDER BY", "DESC"],
+        "should_filter_target": true,
+        "should_aggregate_initiators": true,
+        "actor_mentions": ["Israeli"]
+      },
+      "difficulty": "medium"
+    },
+    {
+      "id": "Q007",
+      "query": "What were the most violent events in 2004?",
+      "intent": "temporal_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "WHERE", "year = 2004"],
+        "should_filter_year": true,
+        "year_mentions": [2004]
+      },
+      "difficulty": "easy"
+    },
+    {
+      "id": "Q008",
+      "query": "Compare protest activity between 1990-2000 and 2000-2005",
+      "intent": "temporal_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "WHERE", "year", "count"],
+        "should_compare_periods": true,
+        "should_aggregate": true
+      },
+      "difficulty": "hard"
+    },
+    {
+      "id": "Q009",
+      "query": "What events occurred in Gaza?",
+      "intent": "geographic_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "Location", "OCCURRED_AT", "WHERE", "Gaza"],
+        "should_filter_location": true,
+        "location_mentions": ["Gaza"]
+      },
+      "difficulty": "easy"
+    },
+    {
+      "id": "Q010",
+      "query": "Show me the chain of events that followed the 2003 Iraq invasion",
+      "intent": "event_chain",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "LINKED_TO", "WHERE", "year = 2003", "Iraq"],
+        "should_find_linked_events": true,
+        "should_filter_location": true,
+        "location_mentions": ["Iraq"]
+      },
+      "difficulty": "hard"
+    },
+    {
+      "id": "Q011",
+      "query": "Which locations had the most events?",
+      "intent": "geographic_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Location", "OCCURRED_AT", "count", "ORDER BY", "DESC"],
+        "should_aggregate_by_location": true,
+        "should_return_locations": true
+      },
+      "difficulty": "easy"
+    },
+    {
+      "id": "Q012",
+      "query": "What types of events did Palestinian Arabs initiate?",
+      "intent": "actor_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Actor", "Palestinian Arab", "INITIATED_BY", "eventType"],
+        "should_filter_actor": true,
+        "should_return_event_types": true,
+        "actor_mentions": ["Palestinian Arab"]
+      },
+      "difficulty": "medium"
+    },
+    {
+      "id": "Q013",
+      "query": "How did coup attempts change over time?",
+      "intent": "temporal_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "WHERE", "isCoup", "year", "count", "ORDER BY"],
+        "should_filter_coups": true,
+        "should_aggregate_by_year": true
+      },
+      "difficulty": "medium"
+    },
+    {
+      "id": "Q014",
+      "query": "What events involved both violence and government actors?",
+      "intent": "pattern_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "Actor", "WHERE"],
+        "should_filter_event_characteristics": true,
+        "should_filter_actor_type": true
+      },
+      "difficulty": "hard"
+    },
+    {
+      "id": "Q015",
+      "query": "Show me events where actors from the same country targeted each other",
+      "intent": "pattern_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Actor", "INITIATED_BY", "TARGETED", "WHERE"],
+        "should_compare_actors": true,
+        "should_involve_multiple_relationships": true
+      },
+      "difficulty": "hard"
+    },
+    {
+      "id": "Q016",
+      "query": "What happened in the Middle East in 1990?",
+      "intent": "geographic_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "Location", "WHERE", "year = 1990", "region"],
+        "should_filter_year": true,
+        "should_filter_region": true,
+        "year_mentions": [1990]
+      },
+      "difficulty": "medium"
+    },
+    {
+      "id": "Q017",
+      "query": "Which actors were most frequently targeted?",
+      "intent": "actor_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Actor", "TARGETED", "count", "ORDER BY", "DESC"],
+        "should_aggregate_targets": true,
+        "should_return_actors": true
+      },
+      "difficulty": "easy"
+    },
+    {
+      "id": "Q018",
+      "query": "Find events where the initiator was unknown",
+      "intent": "pattern_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "Actor", "INITIATED_BY", "WHERE", "isKnown"],
+        "should_filter_by_actor_property": true
+      },
+      "difficulty": "medium"
+    },
+    {
+      "id": "Q019",
+      "query": "What were the deadliest events in the dataset?",
+      "intent": "pattern_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "WHERE", "ORDER BY", "DESC"],
+        "should_filter_casualties": true,
+        "should_sort_by_impact": true
+      },
+      "difficulty": "medium"
+    },
+    {
+      "id": "Q020",
+      "query": "Show me events that occurred in multiple locations",
+      "intent": "geographic_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "Location", "OCCURRED_AT"],
+        "should_handle_multiple_locations": true
+      },
+      "difficulty": "hard"
+    },
+    {
+      "id": "Q021",
+      "query": "What actions did Communists take against governments?",
+      "intent": "actor_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Actor", "Communists", "INITIATED_BY", "TARGETED", "government"],
+        "should_filter_initiator": true,
+        "should_filter_target_type": true,
+        "actor_mentions": ["Communists"]
+      },
+      "difficulty": "hard"
+    },
+    {
+      "id": "Q022",
+      "query": "How many events occurred each month in 2005?",
+      "intent": "temporal_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "WHERE", "year = 2005", "month", "count", "ORDER BY"],
+        "should_filter_year": true,
+        "should_aggregate_by_month": true,
+        "year_mentions": [2005]
+      },
+      "difficulty": "medium"
+    },
+    {
+      "id": "Q023",
+      "query": "Find events where property was damaged",
+      "intent": "pattern_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "WHERE", "propertyDamaged"],
+        "should_filter_by_impact": true
+      },
+      "difficulty": "medium"
+    },
+    {
+      "id": "Q024",
+      "query": "What was the relationship between Hamas and Israel in 2003?",
+      "intent": "actor_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Actor", "Hamas", "Israel", "WHERE", "year = 2003"],
+        "should_filter_multiple_actors": true,
+        "should_filter_year": true,
+        "actor_mentions": ["Hamas", "Israel"]
+      },
+      "difficulty": "hard"
+    },
+    {
+      "id": "Q025",
+      "query": "Show me all failed coups",
+      "intent": "pattern_analysis",
+      "expected_criteria": {
+        "cypher_contains": ["MATCH", "Event", "WHERE", "isCoupFailed = true"],
+        "should_filter_coup_status": true
+      },
+      "difficulty": "easy"
+    }
+  ]
+}

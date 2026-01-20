@@ -13,6 +13,8 @@ A production-grade knowledge graph system that ingests SPEED historical event da
 
 ## Quick Start
 
+**⚡ New to this project?** See [QUICKSTART.md](QUICKSTART.md) for a 5-minute setup guide.
+
 ### Prerequisites
 
 - Python 3.11+
@@ -336,6 +338,14 @@ For questions or issues, please open an issue on GitHub or contact the developme
 
 ---
 
-**Status**: Phase 0 (Foundation) Complete ✅
+**Status**: Phases 1-4 Complete ✅
 
-**Next**: Begin Phase 1 (Data Ingestion & Schema Creation)
+- ✅ Phase 1: Data Ingestion & Schema Creation (62,141 events loaded)
+- ✅ Phase 2: LangGraph Intelligence Layer (Complete implementation)
+- ✅ Phase 3: Evaluation Framework (25 test queries, automated runner)
+- ✅ Phase 4: Streamlit UI (Chat interface, trace view, sidebar)
+- ⏳ Phase 5: Documentation & Polish (In progress)
+
+**Ready to use!** See [QUICKSTART.md](QUICKSTART.md) for setup instructions.
+
+**⚠️ Note**: Valid Anthropic API key required for queries. Update `.env` with your key.
